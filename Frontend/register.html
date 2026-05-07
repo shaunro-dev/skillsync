@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .auth-container { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 100px 24px 24px; position: relative; }
+    .auth-card { width: 100%; max-width: 500px; text-align: center; }
+    .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .role-option { border: 1px solid var(--border-glass); background: rgba(255,255,255,0.02); border-radius: var(--radius-md); padding: 20px; cursor: pointer; transition: all var(--transition-normal); }
+    .role-option:hover { border-color: rgba(59,130,246,0.4); background: rgba(255,255,255,0.05); }
+    .role-option.active { border-color: var(--accent-blue); background: rgba(59,130,246,0.1); box-shadow: inset 0 0 0 1px var(--accent-blue); }
+    .role-icon { font-size: 2rem; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links"><a href="index.html">Home</a><a href="login.html">Login</a></div>
+    </div>
+  </nav>
+  <div class="auth-container animate-fade">
+    <div class="glass-panel auth-card">
+      <h2 style="font-size:2rem;margin-bottom:8px;">Create an Account</h2>
+      <p class="text-secondary mb-6">Join the transparent micro-internship platform.</p>
+      <div class="role-selector" id="registerRoleToggle">
+        <div class="role-option active" data-role="student"><div class="role-icon">👩‍💻</div><h4 style="font-size:1.1rem;margin-bottom:4px;">Student</h4><p class="text-secondary" style="font-size:0.8rem;">Verify skills & get hired</p></div>
+        <div class="role-option" data-role="company"><div class="role-icon">🏢</div><h4 style="font-size:1.1rem;margin-bottom:4px;">Company</h4><p class="text-secondary" style="font-size:0.8rem;">Find verified talent</p></div>
+      </div>
+      <form id="registerForm">
+        <div id="successMessage" style="color:#10b981;margin-bottom:16px;font-size:0.9rem;display:none;"></div>
+        <div id="errorMessage" style="color:#ef4444;margin-bottom:16px;font-size:0.9rem;display:none;"></div>
+        <div class="flex gap-4 mb-4">
+          <div class="form-group mb-0" style="text-align:left;flex:1;"><label class="form-label">First Name</label><input type="text" id="firstName" class="form-control" required></div>
+          <div class="form-group mb-0" style="text-align:left;flex:1;"><label class="form-label">Last Name</label><input type="text" id="lastName" class="form-control" required></div>
+        </div>
+        <div class="form-group" style="text-align:left;"><label class="form-label">Email Address</label><input type="email" id="email" class="form-control" required></div>
+        <div class="form-group" style="text-align:left;"><label class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px;">Create Account</button>
+      </form>
+      <p class="mt-6 text-secondary" style="font-size:0.9rem;">Already have an account? <a href="login.html" style="color:var(--accent-blue);">Log in</a></p>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.querySelectorAll(".role-option").forEach(option => {
+      option.addEventListener("click", () => {
+        document.querySelectorAll(".role-option").forEach(o => o.classList.remove("active"));
+        option.classList.add("active");
+      });
+    });
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const firstName = document.getElementById("firstName").value.trim();
+      const lastName = document.getElementById("lastName").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const role = document.querySelector(".role-option.active").dataset.role;
+      const errorMsg = document.getElementById("errorMessage");
+      const successMsg = document.getElementById("successMessage");
+      errorMsg.style.display = "none"; successMsg.style.display = "none";
+      try {
+        const data = await apiRequest("/auth/register", {
+          method: "POST",
+          body: JSON.stringify({ firstName, lastName, email, password, role })
+        });
+        setToken(data.token);
+        setUser(data.user);
+        successMsg.textContent = "Account created! Redirecting...";
+        successMsg.style.display = "block";
+        setTimeout(() => {
+          window.location.href = data.user.role === "student" ? "student-dashboard.html" : "company-dashboard.html";
+        }, 1500);
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>
