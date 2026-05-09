@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Talent | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .browse-layout { padding-top:100px; padding-bottom:60px; display:grid; grid-template-columns:280px 1fr; gap:32px; }
+    .filter-panel { position:sticky; top:100px; border:1px solid var(--border-glass); background:rgba(22,25,37,0.4); padding:24px; border-radius:var(--radius-lg); }
+    .talent-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:24px; }
+    .talent-card { background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:24px; transition:all var(--transition-normal); display:flex; flex-direction:column; }
+    .talent-card:hover { border-color:rgba(59,130,246,0.5); transform:translateY(-4px); }
+    .talent-header { display:flex; gap:16px; margin-bottom:16px; }
+    .avatar-sm { width:50px; height:50px; border-radius:50%; background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; font-weight:bold; color:white; flex-shrink:0; font-size:0.9rem; }
+    .empty-state { padding:60px; text-align:center; color:var(--text-secondary); grid-column:1/-1; }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links flex items-center"><a href="company-dashboard.html">Dashboard</a></div>
+    </div>
+  </nav>
+  <div class="container browse-layout animate-fade">
+    <aside>
+      <div class="filter-panel">
+        <div class="flex justify-between items-center mb-6">
+          <h3 style="font-size:1.2rem;">Filters</h3>
+          <span style="font-size:0.8rem;color:var(--accent-blue);cursor:pointer;" onclick="resetFilters()">Clear All</span>
+        </div>
+        <div class="form-group">
+          <input type="text" id="skillSearch" class="form-control" placeholder="Search skills..." oninput="applyFilters()">
+        </div>
+        <div style="margin-bottom:24px;">
+          <h4 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-secondary);">Availability</h4>
+          <label style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;"><input type="checkbox" id="f-available" checked onchange="applyFilters()"> Available Now</label>
+          <label style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer;"><input type="checkbox" id="f-soon" checked onchange="applyFilters()"> Available Soon</label>
+          <label style="display:flex;align-items:center;gap:12px;cursor:pointer;"><input type="checkbox" id="f-busy" onchange="applyFilters()"> Busy</label>
+        </div>
+        <div>
+          <h4 style="margin-bottom:12px;font-size:0.95rem;color:var(--text-secondary);">Min Review Score</h4>
+          <input type="range" min="0" max="100" value="0" id="minScore" style="width:100%;" oninput="document.getElementById('scoreVal').textContent=this.value;applyFilters()">
+          <div class="flex justify-between text-secondary mt-2" style="font-size:0.8rem;"><span>0</span><span id="scoreVal" style="color:var(--accent-blue);font-weight:bold;">0</span><span>100</span></div>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div class="flex justify-between items-center mb-6">
+        <p class="text-secondary">Showing <strong id="studentCount" style="color:var(--text-primary);">0</strong> talents</p>
+        <select id="sortBy" class="form-control" style="width:auto;padding:8px;border-radius:8px;" onchange="applyFilters()">
+          <option value="score">Sort by: Score</option>
+          <option value="recently-available">Sort by: Recently Available</option>
+        </select>
+      </div>
+      <div id="studentsContainer" class="talent-grid"><div class="empty-state">Loading talent...</div></div>
+    </main>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!getToken()) window.location.href = "login.html";
+    const user = getUser();
+    if (user && user.role === "student") window.location.href = "student-dashboard.html";
+
+    let allStudents = [];
+
+    function statusClass(s) { return s==="available"?"status-available":s==="busy"?"status-busy":"status-soon"; }
+    function statusLabel(student) {
+      const s = student.availability?.status || "available";
+      if (s==="busy") return `Busy${student.availability?.currentProjectName?" — "+student.availability.currentProjectName:""}`;
+      if (s==="soon") return `Available in ${student.availability?.availableInDays||"?"} days`;
+      return "Available Now";
+    }
+
+    function renderStudents(students) {
+      const container = document.getElementById("studentsContainer");
+      document.getElementById("studentCount").textContent = students.length;
+      if (!students.length) { container.innerHTML = '<div class="empty-state">No students match your filters.</div>'; return; }
+      container.innerHTML = students.map(s => {
+        const initials = ((s.firstName||s.name||"?")[0]+((s.lastName||"")[0]||"")).toUpperCase();
+        return `<div class="talent-card">
+          <div class="talent-header">
+            <div class="avatar-sm">${initials}</div>
+            <div><h4 style="font-size:1.1rem;margin-bottom:2px;">${s.name||"Student"}</h4><p class="text-secondary" style="font-size:0.85rem;">${s.profileTitle||"Student"}</p></div>
+          </div>
+          <div class="mb-4">
+            <div class="status-badge ${statusClass(s.availability?.status)} mb-2">
+              <span class="status-dot"></span> <span>${statusLabel(s)}</span>
+            </div>
+          </div>
+          <div style="background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;border:1px solid var(--border-glass);">
+            <div class="flex justify-between text-sm mb-1"><span class="text-secondary">Review Score</span><span style="color:var(--accent-blue);font-weight:bold;">${s.verifiedScore||0}/100</span></div>
+            <div class="flex justify-between text-sm"><span class="text-secondary">Completed Tasks</span><span>${s.completedTasksCount||0}</span></div>
+            ${s.skills?.length ? `<div class="flex gap-2 mt-2 flex-wrap">${s.skills.slice(0,3).map(sk=>`<span style="font-size:0.75rem;padding:2px 8px;background:rgba(59,130,246,0.1);border-radius:4px;color:var(--accent-blue);">${sk}</span>`).join("")}</div>` : ""}
+          </div>
+          <a href="student-profile.html?id=${s._id}" class="btn btn-primary mt-4" style="width:100%;text-align:center;">View & Hire</a>
+        </div>`;
+      }).join("");
+    }
+
+    function applyFilters() {
+      const skill = document.getElementById("skillSearch").value.toLowerCase();
+      const wantAvail = document.getElementById("f-available").checked;
+      const wantSoon = document.getElementById("f-soon").checked;
+      const wantBusy = document.getElementById("f-busy").checked;
+      const minScore = Number(document.getElementById("minScore").value);
+      const sort = document.getElementById("sortBy").value;
+      let filtered = allStudents.filter(s => {
+        const status = s.availability?.status || "available";
+        if (status==="available" && !wantAvail) return false;
+        if (status==="soon" && !wantSoon) return false;
+        if (status==="busy" && !wantBusy) return false;
+        if ((s.verifiedScore||0) < minScore) return false;
+        if (skill && !s.skills?.some(sk => sk.toLowerCase().includes(skill))) return false;
+        return true;
+      });
+      if (sort==="score") filtered.sort((a,b) => (b.verifiedScore||0)-(a.verifiedScore||0));
+      if (sort==="recently-available") filtered.sort((a,b) => {
+        const ao = a.availability?.status==="available"?0:1, bo = b.availability?.status==="available"?0:1;
+        return ao-bo;
+      });
+      renderStudents(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById("skillSearch").value = "";
+      document.getElementById("f-available").checked = true;
+      document.getElementById("f-soon").checked = true;
+      document.getElementById("f-busy").checked = false;
+      document.getElementById("minScore").value = 0;
+      document.getElementById("scoreVal").textContent = "0";
+      applyFilters();
+    }
+
+    async function loadStudents() {
+      try {
+        allStudents = await apiRequest("/users/students");
+        applyFilters();
+      } catch(e) {
+        document.getElementById("studentsContainer").innerHTML = `<div class="empty-state" style="color:#ef4444;">${e.message}</div>`;
+      }
+    }
+    loadStudents();
+  </script>
+</body>
+</html>

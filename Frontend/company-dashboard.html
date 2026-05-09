@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Company Dashboard | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .cm-header { padding-top:100px; padding-bottom:40px; border-bottom:1px solid var(--border-glass); margin-bottom:40px; }
+    .project-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(350px,1fr)); gap:24px; }
+    .task-card { border:1px solid var(--border-glass); background:var(--bg-glass); padding:24px; border-radius:var(--radius-md); transition:all var(--transition-fast); cursor:pointer; }
+    .task-card:hover { border-color:rgba(59,130,246,0.4); transform:translateY(-4px); }
+    .assignee-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.05); padding:6px 12px; border-radius:var(--radius-full); margin-top:16px; font-size:0.9rem; }
+    .empty-state { padding:60px; text-align:center; color:var(--text-secondary); }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links flex items-center">
+        <a href="browse-students.html">Browse Talent</a>
+        <a href="chat.html">Messages</a>
+        <button class="btn btn-secondary" onclick="Auth.logout()" style="padding:8px 16px;">Log Out</button>
+      </div>
+    </div>
+  </nav>
+  <div class="container animate-fade cm-header">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 id="companyGreeting">Welcome!</h1>
+        <p class="text-secondary mt-2">Manage your micro-internships and track hired talent.</p>
+      </div>
+      <a href="create-task.html" class="btn btn-primary">+ Create New Task</a>
+    </div>
+  </div>
+  <main class="container animate-fade" style="animation-delay:0.2s;">
+    <div class="flex justify-between items-center mb-6">
+      <h3>Your Tasks</h3>
+      <a href="browse-students.html" class="text-gradient" style="font-weight:500;">Browse talent →</a>
+    </div>
+    <div id="tasksContainer" class="project-grid mb-8">
+      <div class="empty-state">Loading tasks...</div>
+    </div>
+  </main>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!getToken()) window.location.href = "login.html";
+
+    const user = getUser();
+    if (user) document.getElementById("companyGreeting").textContent = `Welcome, ${user.name || user.email}`;
+
+    async function loadCompanyTasks() {
+      const container = document.getElementById("tasksContainer");
+      try {
+        const tasks = await apiRequest("/tasks");
+        if (!tasks.length) {
+          container.innerHTML = '<div class="empty-state">No tasks yet. <a href="create-task.html" style="color:var(--accent-blue);">Create one →</a></div>';
+          return;
+        }
+        container.innerHTML = tasks.map(task => `
+          <div class="task-card" style="display:flex; flex-direction:column; cursor:default;">
+            <div class="flex justify-between mb-4">
+              <span class="status-badge" style="${task.status==='completed'?'color:#10b981;border-color:rgba(16,185,129,0.3);':''}">${task.status}</span>
+              ${task.dueDate ? `<span class="text-secondary" style="font-size:0.85rem;">Due ${new Date(task.dueDate).toLocaleDateString()}</span>` : ""}
+            </div>
+            <h4 class="mb-2 hover-text" style="cursor:pointer;" onclick="window.location.href='project.html?id=${task._id}'">${task.title} <span style="color:var(--accent-blue);font-size:0.9rem;">($${task.budget || 0})</span></h4>
+            <p class="text-secondary mb-4" style="font-size:0.9rem;">${task.description || ""}</p>
+            
+            <div class="assignee-badge mb-4" style="width: fit-content; background:var(--bg-primary); border:1px solid var(--border-glass);">
+              ${task.assignedStudent ? `
+                <div class="flex items-center gap-2">
+                  <div class="avatar-sm" style="width:24px;height:24px;font-size:0.7rem;">${task.assignedStudent.name?task.assignedStudent.name[0].toUpperCase():"S"}</div>
+                  <a href="student-profile.html?id=${task.assignedStudent._id}" style="color:var(--text-primary); text-decoration:none;">${task.assignedStudent.name}</a>
+                </div>
+              ` : `<span style="color:var(--text-secondary);">Unassigned</span>`}
+            </div>
+            
+            <div style="margin-top: auto;">
+              ${task.assignedStudent && task.status !== 'completed' ? `
+                <button class="btn btn-primary" style="width:100%;" onclick="markAsCompleted('${task._id}')">Mark as Completed</button>
+              ` : task.status === 'completed' ? `
+                <button class="btn btn-secondary" style="width:100%; opacity:0.5; cursor:not-allowed;" disabled>Completed</button>
+              ` : `
+                <a href="browse-students.html" class="btn btn-secondary" style="width:100%;text-align:center;display:block;">Assign Student</a>
+              `}
+            </div>
+          </div>
+        `).join("");
+      } catch(e) {
+        container.innerHTML = `<div class="empty-state" style="color:#ef4444;">${e.message}</div>`;
+      }
+    }
+    
+    async function markAsCompleted(taskId) {
+      if (!confirm("Are you sure you want to mark this task as completed? This will free up the student for other tasks.")) return;
+      try {
+        await apiRequest(`/tasks/${taskId}/status`, {
+          method: "PUT",
+          body: JSON.stringify({ status: "completed" })
+        });
+        loadCompanyTasks();
+      } catch(e) {
+        alert("Failed to mark as completed: " + e.message);
+      }
+    }
+    
+    loadCompanyTasks();
+  </script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create New Task | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .create-task-container { max-width:600px; margin:100px auto 40px; }
+    textarea.form-control { resize:vertical; min-height:120px; }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container flex justify-between items-center" style="height:80px;">
+      <a href="company-dashboard.html" class="flex items-center gap-2 text-secondary">← Back to Dashboard</a>
+      <div class="logo">SkillSync</div>
+      <div style="width:150px;"></div>
+    </div>
+  </nav>
+  <div class="container animate-fade">
+    <div class="glass-panel create-task-container">
+      <div class="text-center mb-8">
+        <h2>Create New Task</h2>
+        <p class="text-secondary mt-2">Define a new micro-internship for verified talent.</p>
+      </div>
+      <div id="errorMessage" style="color:#ef4444;margin-bottom:16px;display:none;"></div>
+      <form id="createTaskForm">
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label">Project Title</label>
+          <input type="text" id="title" class="form-control" placeholder="e.g. Build a responsive React Navbar" required>
+        </div>
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label">Description & Requirements</label>
+          <textarea id="description" class="form-control" placeholder="Detail the exact deliverables needed..." required></textarea>
+        </div>
+        <div class="flex gap-4 mb-4">
+          <div class="form-group mb-0" style="text-align:left;flex:1;">
+            <label class="form-label">Budget (Fix-bid)</label>
+            <div class="flex items-center">
+              <span style="padding:14px;background:rgba(255,255,255,0.05);border:1px solid var(--border-glass);border-right:none;border-radius:var(--radius-md) 0 0 var(--radius-md);color:var(--text-secondary);">$</span>
+              <input type="number" id="budget" class="form-control" placeholder="300" style="border-radius:0 var(--radius-md) var(--radius-md) 0;" required>
+            </div>
+          </div>
+          <div class="form-group mb-0" style="text-align:left;flex:1;">
+            <label class="form-label">Primary Skill Required</label>
+            <select id="primarySkill" class="form-control" required style="appearance:auto;">
+              <option value="" disabled selected>Select Skill</option>
+              <option value="react">React.js</option>
+              <option value="node">Node.js</option>
+              <option value="uiux">UI/UX Design</option>
+              <option value="python">Python / Django</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="text-align:left;">
+          <label class="form-label">Due Date (optional)</label>
+          <input type="date" id="dueDate" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary mt-4" style="width:100%;">Post Task</button>
+      </form>
+    </div>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!getToken()) window.location.href = "login.html";
+
+    document.getElementById("createTaskForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const errorMsg = document.getElementById("errorMessage");
+      errorMsg.style.display = "none";
+      const title = document.getElementById("title").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const budget = Number(document.getElementById("budget").value);
+      const primarySkill = document.getElementById("primarySkill").value;
+      const dueDate = document.getElementById("dueDate").value || undefined;
+      try {
+        await apiRequest("/tasks", {
+          method: "POST",
+          body: JSON.stringify({ title, description, budget, primarySkill, dueDate })
+        });
+        window.location.href = "company-dashboard.html";
+      } catch(error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
+</body>
+</html>

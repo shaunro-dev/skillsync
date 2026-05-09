@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .profile-header { padding:120px 0 60px; position:relative; }
+    .profile-hero-content { display:flex; gap:32px; align-items:flex-start; }
+    .hero-avatar { width:140px; height:140px; border-radius:50%; background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; font-size:3rem; font-weight:bold; color:white; border:4px solid var(--bg-primary); box-shadow:0 0 0 2px var(--accent-purple); flex-shrink:0;}
+    .skills-scroller { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+    .skill-tag { padding:6px 16px; background:rgba(255,255,255,0.05); border:1px solid var(--border-glass); border-radius:var(--radius-full); font-size:0.9rem; color:var(--text-secondary); }
+    .content-grid { display:grid; grid-template-columns:2fr 1fr; gap:32px; padding-bottom:80px; }
+    .public-status-banner { width:100%; padding:24px; border-radius:var(--radius-lg); margin-bottom:32px; display:flex; gap:16px; align-items:flex-start; background:var(--bg-glass); border:1px solid var(--border-glass); }
+    .history-card { padding:24px; border-bottom:1px solid var(--border-glass); }
+    .history-card:last-child { border-bottom:none; }
+    
+    .editable:hover { background: rgba(255,255,255,0.05); border-radius: 4px; cursor: pointer; outline: 1px dashed var(--accent-blue); }
+    .editable:focus { background: rgba(0,0,0,0.2); outline: 2px solid var(--accent-blue); padding: 4px; border-radius: 4px;}
+    .edit-hint { font-size: 0.8rem; color: var(--accent-blue); display: none; margin-left: 8px; vertical-align: middle;}
+    .editable:hover .edit-hint { display: inline-block; }
+
+    .badges-container { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+    .badge { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: var(--radius-full); background: var(--bg-glass); border: 1px solid var(--border-glass); opacity: 0.5; filter: grayscale(100%); transition: all 0.3s ease; }
+    .badge.earned { opacity: 1; filter: grayscale(0%); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    .badge-icon { font-size: 1.5rem; }
+    .badge-info { display: flex; flex-direction: column; }
+    .badge-name { font-size: 0.9rem; font-weight: bold; }
+    .badge-req { font-size: 0.75rem; color: var(--text-secondary); }
+    
+    /* Modal styles */
+    .modal-overlay { position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    .modal { background: var(--bg-primary); border: 1px solid var(--border-glass); border-radius: var(--radius-lg); padding: 32px; width: 100%; max-width: 500px; }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links flex items-center" id="navLinks">
+        <a href="student-dashboard.html" id="dashLink">Dashboard</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="profile-header container animate-fade">
+    <div class="profile-hero-content">
+      <div class="hero-avatar" id="profileInitials">?</div>
+      <div style="flex:1;">
+        <div class="flex items-center gap-4 mb-2">
+          <h1 id="studentName" style="font-size:3rem;">Loading...</h1>
+          <div class="status-badge" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--accent-blue);">
+            Score: <span id="studentScore">0</span>/100
+          </div>
+        </div>
+        
+        <h3 id="studentTitle" class="text-secondary mb-4" style="font-size:1.5rem; font-weight: normal;">
+          <span class="editable-field" data-field="profileTitle">—</span>
+          <span class="edit-hint">✎ Click to edit</span>
+        </h3>
+        
+        <div class="mb-4">
+          <h4 style="font-size:1.1rem; margin-bottom: 8px;">Bio</h4>
+          <p id="studentBio" class="text-secondary" style="font-size:1.1rem;max-width:800px;">
+            <span class="editable-field" data-field="bio">—</span>
+            <span class="edit-hint">✎ Click to edit</span>
+          </p>
+        </div>
+
+        <div class="mb-4">
+          <h4 style="font-size:1.1rem; margin-bottom: 8px;">About Me</h4>
+          <p id="studentDesc" class="text-secondary" style="font-size:1rem;max-width:800px;line-height:1.6;">
+            <span class="editable-field" data-field="description">—</span>
+            <span class="edit-hint">✎ Click to edit</span>
+          </p>
+        </div>
+
+        <div id="studentSkills" class="skills-scroller"></div>
+        
+        <div style="margin-top: 32px;">
+          <div class="flex justify-between items-center mb-2">
+            <h4>Achievements</h4>
+            <span id="badgeProgress" class="text-secondary" style="font-size:0.85rem;"></span>
+          </div>
+          <div class="badges-container" id="badgesContainer"></div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="container content-grid animate-fade" style="animation-delay:0.2s;">
+    <div>
+      <h3 class="mb-4">Active Working Tasks</h3>
+      <div class="glass-panel mb-8" style="padding:0;" id="activeTasksList">
+        <div style="padding:40px;text-align:center;color:var(--text-secondary);">Loading active tasks...</div>
+      </div>
+
+      <h3 class="mb-4">Completed Tasks</h3>
+      <div class="glass-panel" style="padding:0;" id="tasksList">
+        <div style="padding:40px;text-align:center;color:var(--text-secondary);">Loading completed tasks...</div>
+      </div>
+    </div>
+    <aside>
+      <div class="public-status-banner" id="publicAvailabilityBanner">
+        <div id="statusIcon" style="font-size:2rem;">🟢</div>
+        <div>
+          <h3 id="publicStatusTitle" style="color:var(--status-available);margin-bottom:4px;">Available for tasks</h3>
+          <p id="publicStatusDesc" class="text-secondary">This student is free to accept new opportunities.</p>
+        </div>
+      </div>
+
+      <div class="glass-panel" id="hireBlock" style="display:none;">
+        <h3 class="mb-4">Assign Task</h3>
+        <div id="assignContent">
+          <!-- Rendered via JS -->
+        </div>
+      </div>
+    </aside>
+  </main>
+
+
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    let currentStudentId = null;
+    let isOwnProfile = false;
+
+    const badges = [
+      { id: 'bronze', name: 'Bronze', req: 25, icon: '🥉', color: '#cd7f32' },
+      { id: 'silver', name: 'Silver', req: 100, icon: '🥈', color: '#c0c0c0' },
+      { id: 'gold', name: 'Gold', req: 200, icon: '🥇', color: '#ffd700' },
+      { id: 'platinum', name: 'Platinum', req: 400, icon: '💎', color: '#e5e4e2' },
+      { id: 'diamond', name: 'Diamond', req: 800, icon: '💠', color: '#b9f2ff' },
+      { id: 'jade', name: 'Jade', req: 1000, icon: '🟩', color: '#00a86b' }
+    ];
+
+    async function loadStudentProfile() {
+      const currentUser = getUser();
+      const params = new URLSearchParams(window.location.search);
+      const id = params.get("id") || currentUser?.id;
+      
+      if (!id) { document.getElementById("studentName").textContent = "No student selected"; return; }
+      currentStudentId = id;
+      
+      if (currentUser) {
+        isOwnProfile = (currentUser.id === id && currentUser.role === 'student');
+        if (currentUser.role === 'company') {
+          document.getElementById('dashLink').href = 'company-dashboard.html';
+        }
+      }
+
+      if (!isOwnProfile && currentUser?.role === 'student') {
+        // Students shouldn't see other student profiles to hire, maybe just redirect or hide hire block
+        document.querySelector("aside").style.display = "none";
+        document.querySelector(".content-grid").style.gridTemplateColumns = "1fr";
+      }
+
+      try {
+        const { student, tasks } = await apiRequest(`/users/students/${id}`);
+        if (!student) { document.getElementById("studentName").textContent = "Student not found"; return; }
+
+        const initials = ((student.firstName||student.name||"?")[0]+((student.lastName||"")[0]||"")).toUpperCase();
+        document.getElementById("profileInitials").textContent = initials;
+        document.getElementById("studentName").textContent = student.name || `${student.firstName} ${student.lastName}`;
+        document.getElementById("studentScore").textContent = student.verifiedScore || 0;
+
+        // Editable fields
+        setupEditableField('profileTitle', student.profileTitle || "Student");
+        setupEditableField('bio', student.bio || "No bio provided.");
+        setupEditableField('description', student.description || "No description provided.");
+
+        if (student.skills?.length) {
+          document.getElementById("studentSkills").innerHTML = student.skills.map(s=>`<span class="skill-tag">${s}</span>`).join("");
+        }
+
+        // Status
+        const status = student.availability?.status || "available";
+        const statusIcon = { available:"🟢", busy:"🔴", soon:"🟡" }[status] || "🟢";
+        const statusColor = { available:"var(--status-available)", busy:"var(--status-busy)", soon:"var(--status-soon)" }[status];
+        const statusTitle = status==="available" ? "Available for tasks" : status==="busy" ? `Busy on: ${student.availability.currentProjectName||"a project"}` : `Available in ${student.availability.availableInDays||"?"} days`;
+        const statusDesc = status==="available" ? "This student is free to accept new opportunities." : status==="busy" ? "Currently working on a project." : "Will be free soon.";
+
+        document.getElementById("statusIcon").textContent = statusIcon;
+        document.getElementById("publicStatusTitle").style.color = statusColor;
+        document.getElementById("publicStatusTitle").textContent = statusTitle;
+        document.getElementById("publicStatusDesc").textContent = statusDesc;
+
+        // Badges
+        const completedCount = student.completedTasksCount || 0;
+        renderBadges(completedCount);
+
+        // Tasks Lists
+        const activeTasksList = document.getElementById("activeTasksList");
+        const completedTasksList = document.getElementById("tasksList");
+        
+        const activeTasks = tasks.filter(t => t.status === 'assigned' || t.status === 'in-progress');
+        const completedTasks = tasks.filter(t => t.status === 'completed');
+
+        renderTaskList(activeTasks, activeTasksList, "No active tasks.");
+        renderTaskList(completedTasks, completedTasksList, "No completed tasks yet.");
+
+        if (currentUser?.role === 'company') {
+          renderHireBlock(student);
+        }
+
+      } catch(e) {
+        document.getElementById("studentName").textContent = "Error loading profile";
+        console.error(e);
+      }
+    }
+
+    function renderBadges(completedCount) {
+      const container = document.getElementById('badgesContainer');
+      const progressText = document.getElementById('badgeProgress');
+      
+      let nextBadge = null;
+      let html = '';
+      
+      badges.forEach(b => {
+        const earned = completedCount >= b.req;
+        if (!earned && !nextBadge) nextBadge = b;
+        
+        html += `
+          <div class="badge ${earned ? 'earned' : ''}" title="${earned ? 'Earned!' : `Needs ${b.req} completed tasks`}">
+            <div class="badge-icon">${b.icon}</div>
+            <div class="badge-info">
+              <span class="badge-name" style="color: ${earned ? b.color : 'inherit'}">${b.name}</span>
+              <span class="badge-req">${b.req} Tasks</span>
+            </div>
+          </div>
+        `;
+      });
+      
+      container.innerHTML = html;
+      
+      if (nextBadge) {
+        progressText.textContent = `${completedCount} / ${nextBadge.req} tasks for ${nextBadge.name}`;
+      } else {
+        progressText.textContent = `${completedCount} tasks - All badges earned!`;
+      }
+    }
+
+    function renderTaskList(tasks, container, emptyMsg) {
+      if (!tasks?.length) {
+        container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-secondary);">${emptyMsg}</div>`;
+      } else {
+        container.innerHTML = tasks.map(t => `
+          <div class="history-card">
+            <div class="flex justify-between items-center mb-2">
+              <h4>${t.title} <span style="color:var(--accent-blue);font-size:0.9rem;">($${t.budget||0})</span></h4>
+              <span class="text-secondary" style="font-size:0.9rem;">${t.createdAt ? new Date(t.createdAt).toLocaleDateString() : ""}</span>
+            </div>
+            <p class="text-secondary">${t.company?.name || t.company?.companyName || "Company"}</p>
+          </div>
+        `).join("");
+      }
+    }
+
+    function setupEditableField(fieldId, value) {
+      const el = document.querySelector(`.editable-field[data-field="${fieldId}"]`);
+      if (!el) return;
+      
+      el.textContent = value;
+      
+      if (isOwnProfile) {
+        const parent = el.parentElement;
+        parent.classList.add('editable');
+        el.contentEditable = "true";
+        
+        el.addEventListener("blur", async () => {
+          const newValue = el.textContent.trim();
+          if (newValue !== value) {
+            try {
+              const payload = {};
+              payload[fieldId] = newValue;
+              await apiRequest("/users/me", {
+                method: "PUT",
+                body: JSON.stringify(payload)
+              });
+              value = newValue; // update stored value
+            } catch (e) {
+              console.error("Failed to save:", e);
+              alert("Failed to save " + fieldId);
+              el.textContent = value; // revert
+            }
+          }
+        });
+
+        // Prevent newlines in simple text fields
+        if (fieldId === 'profileTitle') {
+          el.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              el.blur();
+            }
+          });
+        }
+      }
+    }
+
+    async function renderHireBlock(student) {
+      const block = document.getElementById('hireBlock');
+      const content = document.getElementById('assignContent');
+      block.style.display = 'block';
+
+      if (student.availability?.status === 'busy') {
+        content.innerHTML = `
+          <p class="text-secondary mb-4" style="font-size: 0.9rem;">This student is currently busy on: <strong style="color:var(--text-primary);">${student.availability.currentProjectName || 'a project'}</strong></p>
+          <button class="btn btn-secondary" style="width:100%; opacity: 0.5; cursor: not-allowed;" disabled>Student is Busy</button>
+        `;
+        return;
+      }
+
+      content.innerHTML = `<p class="text-secondary mb-4" style="font-size: 0.9rem;">Loading your tasks...</p>`;
+      try {
+        const tasks = await apiRequest("/tasks");
+        const openTasks = tasks.filter(t => t.status === 'open');
+        
+        if (openTasks.length === 0) {
+          content.innerHTML = `
+            <p class="text-secondary mb-4" style="font-size: 0.9rem;">You have no open tasks.</p>
+            <a href="create-task.html" class="btn btn-primary" style="width:100%; text-align:center; display:block;">Create one first</a>
+          `;
+        } else {
+          content.innerHTML = `
+            <p class="text-secondary mb-4" style="font-size: 0.9rem;">Select one of your open tasks to assign.</p>
+            <select id="taskSelect" class="form-control mb-4" style="width: 100%;">
+              <option value="">-- Select a Task --</option>
+              ${openTasks.map(t => `<option value="${t._id}">${t.title} ($${t.budget||0})</option>`).join("")}
+            </select>
+            <button class="btn btn-primary" style="width:100%;" id="assignBtn" onclick="submitAssignment()">Assign to This Student</button>
+          `;
+        }
+      } catch (e) {
+        content.innerHTML = `<p style="color: #ef4444;">Error loading tasks</p>`;
+      }
+    }
+
+    async function submitAssignment() {
+      const select = document.getElementById('taskSelect');
+      if (!select) return;
+      const taskId = select.value;
+      if (!taskId) return alert("Please select a task");
+      
+      const btn = document.getElementById('assignBtn');
+      btn.disabled = true;
+      btn.textContent = "Assigning...";
+      
+      try {
+        await apiRequest("/tasks/assign", {
+          method: "POST",
+          body: JSON.stringify({ taskId, studentId: currentStudentId })
+        });
+        alert("Task successfully assigned!");
+        loadStudentProfile(); // refresh
+      } catch (e) {
+        alert("Failed to assign task: " + e.message);
+        btn.disabled = false;
+        btn.textContent = "Assign to This Student";
+      }
+    }
+
+    loadStudentProfile();
+  </script>
+</body>
+</html>

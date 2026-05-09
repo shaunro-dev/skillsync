@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .dashboard-layout { padding-top:100px; padding-bottom:60px; display:grid; grid-template-columns:320px 1fr; gap:32px; }
+    .profile-card { text-align:center; position:sticky; top:100px; }
+    .avatar { width:100px; height:100px; border-radius:50%; background:var(--accent-gradient); margin:0 auto 16px; display:flex; align-items:center; justify-content:center; font-size:2.5rem; font-weight:bold; color:white; border:4px solid var(--bg-primary); box-shadow:0 0 0 2px var(--accent-purple); }
+    .stat-box { background:rgba(255,255,255,0.03); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:16px; margin-top:24px; }
+    .stat-value { font-size:2.5rem; font-family:'Outfit',sans-serif; font-weight:700; color:var(--accent-blue); }
+    .project-card { display:flex; justify-content:space-between; align-items:center; padding:20px; border-bottom:1px solid var(--border-glass); transition:background var(--transition-fast); }
+    .project-card:hover { background:rgba(255,255,255,0.02); }
+    .project-card:last-child { border-bottom:none; }
+    .tab-nav { display:flex; gap:24px; border-bottom:1px solid var(--border-glass); margin-bottom:24px; }
+    .tab-link { padding:12px 0; color:var(--text-secondary); font-weight:500; position:relative; }
+    .tab-link.active { color:var(--text-primary); }
+    .tab-link.active::after { content:''; position:absolute; bottom:-1px; left:0; width:100%; height:2px; background:var(--accent-gradient); }
+    .status-banner { background:linear-gradient(90deg,rgba(16,185,129,0.1),transparent); border-left:4px solid var(--status-available); padding:16px 24px; border-radius:0 var(--radius-md) var(--radius-md) 0; margin-bottom:32px; display:flex; justify-content:space-between; align-items:center; }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links flex items-center">
+        <a href="browse-task.html">Browse Tasks</a>
+        <a href="project.html">My Projects</a>
+        <a href="chat.html">Messages</a>
+        <button class="btn btn-secondary" onclick="Auth.logout()" style="padding:8px 16px;">Log Out</button>
+      </div>
+    </div>
+  </nav>
+  <div class="container dashboard-layout animate-fade">
+    <aside>
+      <div class="glass-panel profile-card">
+        <div class="avatar" id="userInitials">?</div>
+        <h3 id="userName" style="font-size:1.5rem;">Loading...</h3>
+        <p id="userTitle" class="text-secondary mb-4">—</p>
+        <div id="availability-preview" class="status-badge status-available mb-4">
+          <span class="status-dot"></span> <span id="availability-text">Available</span>
+        </div>
+        <a href="availability.html" class="btn btn-secondary" style="width:100%;font-size:0.85rem;">Update Availability</a>
+        <a href="student-profile.html" class="btn btn-secondary mt-2" style="width:100%;font-size:0.85rem;border-color:transparent;background:rgba(255,255,255,0.05);">View Public Profile</a>
+        <div class="stat-box">
+          <div class="text-secondary text-sm mb-1">Completed Tasks</div>
+          <div class="stat-value" id="completedCount">0</div>
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div class="status-banner" id="statusBannerConfig">
+        <div>
+          <h4 id="bannerTitle" style="color:var(--text-primary);margin-bottom:4px;">You are currently visible as Available</h4>
+          <p id="bannerDesc" class="text-secondary" style="font-size:0.9rem;">Companies can actively recruit you for new micro-internships.</p>
+        </div>
+        <a href="availability.html" class="btn btn-secondary" style="padding:6px 12px;font-size:0.85rem;">Change</a>
+      </div>
+      <div class="tab-nav">
+        <button class="tab-link active" id="btn-active" onclick="toggleTab('active')">Active Projects</button>
+        <button class="tab-link" id="btn-past" onclick="toggleTab('past')">Past Completions</button>
+      </div>
+      <div id="view-active" class="glass-panel" style="padding:0;">
+        <div style="padding:40px;text-align:center;">
+          <div style="font-size:3rem;margin-bottom:16px;opacity:0.5;">🚀</div>
+          <h3 class="mb-2">No active projects right now</h3>
+          <p class="text-secondary mb-6">Your availability is set to Available. Keep your skills sharp!</p>
+        </div>
+      </div>
+      <div id="view-past" class="glass-panel" style="padding:0;display:none;" id="pastTasksList"></div>
+    </main>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!getToken()) window.location.href = "login.html";
+
+    function toggleTab(tab) {
+      ["active","past"].forEach(t => {
+        document.getElementById("btn-"+t).classList.toggle("active", t===tab);
+        document.getElementById("view-"+t).style.display = t===tab ? "block" : "none";
+      });
+    }
+
+    async function loadDashboard() {
+      try {
+        const user = await apiRequest("/users/me");
+        const initials = ((user.firstName||"?")[0]+(user.lastName||"")[0]).toUpperCase();
+        document.getElementById("userInitials").textContent = initials;
+        document.getElementById("userName").textContent = user.name || `${user.firstName} ${user.lastName}`;
+        document.getElementById("userTitle").textContent = user.profileTitle || "Student";
+        document.getElementById("completedCount").textContent = user.completedTasksCount || 0;
+
+        const status = user.availability?.status || "available";
+        const preview = document.getElementById("availability-preview");
+        const text = document.getElementById("availability-text");
+        const banner = document.getElementById("statusBannerConfig");
+        preview.className = "status-badge mb-4 status-" + status;
+        if (status === "available") {
+          text.textContent = "Available";
+          banner.style.borderLeftColor = "var(--status-available)";
+          document.getElementById("bannerTitle").textContent = "You are currently visible as Available";
+          document.getElementById("bannerDesc").textContent = "Companies can actively recruit you.";
+        } else if (status === "busy") {
+          text.textContent = "Busy";
+          banner.style.borderLeftColor = "var(--status-busy)";
+          banner.style.background = "linear-gradient(90deg,rgba(239,68,68,0.1),transparent)";
+          document.getElementById("bannerTitle").textContent = `Busy on: ${user.availability.currentProjectName || "a project"}`;
+          document.getElementById("bannerDesc").textContent = "Companies see you as occupied.";
+        } else if (status === "soon") {
+          text.textContent = `Available in ${user.availability.availableInDays || "?"} days`;
+          banner.style.borderLeftColor = "var(--status-soon)";
+          banner.style.background = "linear-gradient(90deg,rgba(245,158,11,0.1),transparent)";
+          document.getElementById("bannerTitle").textContent = `Available in ${user.availability.availableInDays || "?"} days`;
+          document.getElementById("bannerDesc").textContent = "Companies can queue work for you.";
+        }
+      } catch(e) {
+        console.error("Dashboard load error:", e.message);
+      }
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

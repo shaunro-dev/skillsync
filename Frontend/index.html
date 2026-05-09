@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SkillSync | Verified Micro-Internships</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Page specific styles */
+    .hero {
+      padding: 160px 0 80px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 800px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(15, 17, 26, 0) 70%);
+      z-index: -1;
+    }
+
+    .hero h1 {
+      font-size: 4rem;
+      margin-bottom: 24px;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 40px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 32px;
+      margin-top: 80px;
+      padding-bottom: 80px;
+    }
+
+    .feature-card {
+      transition: transform var(--transition-normal);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: rgba(59, 130, 246, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      color: var(--accent-blue);
+      font-size: 1.5rem;
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    /* Abstract dashboard preview in hero */
+    .hero-dashboard {
+      margin-top: 80px;
+      margin-inline: auto;
+      max-width: 900px;
+      height: 400px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-glass);
+      background: linear-gradient(to bottom, rgba(22, 25, 37, 0.8), rgba(22, 25, 37, 0.4));
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero-dashboard::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gradient" style="stroke: url(#grad1);">
+          <defs>
+            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" style="stop-color:var(--accent-blue);stop-opacity:1" />
+              <stop offset="100%" style="stop-color:var(--accent-purple);stop-opacity:1" />
+            </linearGradient>
+          </defs>
+          <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+          <polyline points="2 17 12 22 22 17"></polyline>
+          <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+        SkillSync
+      </a>
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="browse-students.html">Browse Talent</a>
+        <a href="login.html">Login</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero container animate-fade">
+    <div class="status-badge mb-4" style="margin: 0 auto 20px auto; width: max-content;">
+      <span class="status-dot animate-pulse"></span>
+      <span style="color: var(--text-secondary)">Over 2,000 talents currently available</span>
+    </div>
+    
+    <h1>Hire <span class="text-gradient">Verified Talent</span><br>with Zero Guesswork.</h1>
+    <p>A transparent micro-internship platform where students prove their skills first. See real-time availability and hire on the spot.</p>
+    
+    <div class="hero-buttons">
+      <a href="register.html?role=student" class="btn btn-secondary">Join as Student</a>
+      <a href="register.html?role=company" class="btn btn-primary">Hire Talent</a>
+    </div>
+
+    <!-- Decorative Mockup -->
+    <div class="hero-dashboard animate-fade" style="animation-delay: 0.2s;">
+      <div style="padding: 20px; border-bottom: 1px solid var(--border-glass); display: flex; gap: 10px;">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #ef4444;"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b;"></div>
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #10b981;"></div>
+      </div>
+      <div style="padding: 40px; display: flex; gap: 32px; justify-content: center;">
+        <!-- Mock Card 1 -->
+        <div class="glass-panel" style="width: 250px; text-align: left;">
+          <div class="status-badge status-available mb-2">
+            <span class="status-dot"></span> Available
+          </div>
+          <h4 style="font-size: 1.1rem; margin-bottom: 4px;">Alex Johnson</h4>
+          <p class="text-secondary" style="font-size: 0.85rem; margin-bottom: 16px;">Frontend React Developer</p>
+          <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; display: inline-block;">
+            <span style="color: var(--accent-blue); font-weight: bold;">Review Score: 94/100</span>
+          </div>
+        </div>
+        <!-- Mock Card 2 -->
+        <div class="glass-panel" style="width: 250px; text-align: left; opacity: 0.6;">
+          <div class="status-badge status-busy mb-2">
+            <span class="status-dot"></span> Busy (Finishes in 2 Days)
+          </div>
+          <h4 style="font-size: 1.1rem; margin-bottom: 4px;">Sarah Lee</h4>
+          <p class="text-secondary" style="font-size: 0.85rem; margin-bottom: 16px;">UI/UX Designer</p>
+          <div style="background: rgba(255,255,255,0.05); padding: 8px; border-radius: 8px; display: inline-block;">
+            <span style="color: var(--accent-blue); font-weight: bold;">Review Score: 98/100</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works & Features -->
+  <section class="container animate-fade" style="animation-delay: 0.4s;">
+    <div class="text-center mb-8">
+      <h2>How it Actually Works</h2>
+      <p class="text-secondary mt-2">No AI matching gimmicks. Just skill verification and manual selection.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="glass-panel feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>1. Skill Verification</h3>
+        <p class="text-secondary mt-2">Students complete standardized micro-tasks to earn a verified score. Companies browse candidates based on proven abilities, not just resumes.</p>
+      </div>
+
+      <div class="glass-panel feature-card" style="border-color: rgba(16, 185, 129, 0.3);">
+        <div class="feature-icon" style="background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.2); color: #10b981;">🟢</div>
+        <h3>2. Real-Time Availability</h3>
+        <p class="text-secondary mt-2">Recruiters can see exactly who is available, who is busy on another project, and when they will be free. Predictability is our core feature.</p>
+      </div>
+
+      <div class="glass-panel feature-card">
+        <div class="feature-icon">🤝</div>
+        <h3>3. Direct Manual Hiring</h3>
+        <p class="text-secondary mt-2">Search, filter, and assign. Companies have full control over who they select for their micro-internship tasks. Perfect for quick deployments.</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
