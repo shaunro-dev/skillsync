@@ -12,7 +12,7 @@ function generateToken(user) {
 
 exports.register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, role, companyName, hrName } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -26,7 +26,9 @@ exports.register = async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
-      role
+      role,
+      companyName: role === "company" ? companyName : "",
+      hrName: role === "company" ? hrName : ""
     });
 
     res.status(201).json({

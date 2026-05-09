@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Messages | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-primary);
+    }
+    
+    .chat-container {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      flex: 1;
+      overflow: hidden;
+      margin-top: 80px;
+      border-top: 1px solid var(--border-glass);
+    }
+
+    /* Sidebar */
+    .chat-sidebar {
+      border-right: 1px solid var(--border-glass);
+      background: rgba(22,25,37, 0.5);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-glass);
+    }
+    .conv-item {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-glass);
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .conv-item:hover, .conv-item.active {
+      background: rgba(59,130,246, 0.1);
+    }
+    .conv-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .unread-badge {
+      background: var(--accent-blue);
+      color: white;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: bold;
+    }
+    .conv-title {
+      font-weight: bold;
+      font-size: 1rem;
+      color: var(--text-primary);
+    }
+    .conv-subtitle {
+      font-size: 0.85rem;
+      color: var(--accent-blue);
+    }
+    .conv-preview {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Chat Area */
+    .chat-area {
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-primary);
+      position: relative;
+    }
+    .chat-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-glass);
+      background: rgba(22,25,37, 0.8);
+      backdrop-filter: blur(10px);
+    }
+    .messages-container {
+      flex: 1;
+      padding: 24px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .message {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      line-height: 1.5;
+      position: relative;
+    }
+    .message.sent {
+      align-self: flex-end;
+      background: var(--accent-blue);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+    .message.received {
+      align-self: flex-start;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-glass);
+      color: var(--text-primary);
+      border-bottom-left-radius: 4px;
+    }
+    .message-time {
+      font-size: 0.7rem;
+      opacity: 0.7;
+      margin-top: 4px;
+      display: block;
+      text-align: right;
+    }
+
+    .chat-input-area {
+      padding: 20px;
+      border-top: 1px solid var(--border-glass);
+      background: rgba(22,25,37, 0.8);
+      display: flex;
+      gap: 12px;
+    }
+    .chat-input {
+      flex: 1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border-glass);
+      border-radius: var(--radius-full);
+      padding: 12px 20px;
+      color: var(--text-primary);
+      outline: none;
+    }
+    .chat-input:focus {
+      border-color: var(--accent-blue);
+    }
+    .send-btn {
+      background: var(--accent-blue);
+      border: none;
+      border-radius: 50%;
+      width: 46px;
+      height: 46px;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .send-btn:hover {
+      transform: scale(1.05);
+      background: #2563eb;
+    }
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .empty-chat {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      flex-direction: column;
+      gap: 16px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links flex items-center" id="navLinks">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </nav>
+
+  <div class="chat-container animate-fade">
+    <aside class="chat-sidebar">
+      <div class="sidebar-header">
+        <h3>Conversations</h3>
+      </div>
+      <div id="convList">
+        <div style="padding: 20px; color: var(--text-secondary); text-align: center;">Loading...</div>
+      </div>
+    </aside>
+
+    <main class="chat-area" id="chatArea">
+      <div class="empty-chat" id="emptyState">
+        <div style="font-size: 3rem;">💬</div>
+        <h3>Select a conversation to start messaging</h3>
+      </div>
+
+      <div style="display: none; flex-direction: column; height: 100%;" id="activeChat">
+        <div class="chat-header">
+          <h3 id="chatTitle">Task Name</h3>
+          <p class="text-secondary" style="font-size: 0.85rem;" id="chatSubtitle">with User Name</p>
+        </div>
+        
+        <div class="messages-container" id="messagesContainer">
+          <!-- Messages go here -->
+        </div>
+
+        <form class="chat-input-area" id="chatForm">
+          <input type="text" id="msgInput" class="chat-input" placeholder="Type a message..." autocomplete="off">
+          <button type="submit" class="send-btn" id="sendBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!getToken()) window.location.href = "login.html";
+    
+    const currentUser = getUser();
+    let currentTaskId = new URLSearchParams(window.location.search).get("taskId");
+    let currentReceiverId = null;
+    let conversations = [];
+    let pollInterval = null;
+
+    // Set up nav links
+    const navLinks = document.getElementById("navLinks");
+    if (currentUser.role === 'student') {
+      navLinks.innerHTML = '<a href="student-dashboard.html">Dashboard</a><a href="browse-task.html">Browse Tasks</a>';
+    } else {
+      navLinks.innerHTML = '<a href="company-dashboard.html">Dashboard</a><a href="browse-students.html">Browse Talent</a>';
+    }
+
+    async function loadConversations() {
+      try {
+        conversations = await apiRequest("/messages/conversations");
+        renderConversations();
+        
+        // If a taskId was in URL, open it automatically
+        if (currentTaskId) {
+          const conv = conversations.find(c => c.task._id === currentTaskId);
+          if (conv) {
+            openConversation(conv.task._id, conv.otherUser._id, conv.task.title, conv.otherUser.name);
+          }
+        }
+      } catch (e) {
+        document.getElementById("convList").innerHTML = `<div style="padding: 20px; color: #ef4444;">Failed to load conversations.</div>`;
+      }
+    }
+
+    function renderConversations() {
+      const list = document.getElementById("convList");
+      if (!conversations.length) {
+        list.innerHTML = `<div style="padding: 20px; color: var(--text-secondary); text-align: center;">No active conversations. Assign a task to start chatting.</div>`;
+        return;
+      }
+
+      list.innerHTML = conversations.map(c => {
+        const isActive = c.task._id === currentTaskId;
+        const lastMsg = c.lastMessage ? c.lastMessage.content : "No messages yet";
+        
+        return `
+          <div class="conv-item ${isActive ? 'active' : ''}" onclick="openConversation('${c.task._id}', '${c.otherUser._id}', '${c.task.title}', '${c.otherUser.name}')">
+            <div class="conv-header">
+              <span class="conv-title">${c.otherUser.name}</span>
+              ${c.unreadCount > 0 ? `<span class="unread-badge">${c.unreadCount}</span>` : ''}
+            </div>
+            <div class="conv-subtitle">${c.task.title}</div>
+            <div class="conv-preview">${lastMsg}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    async function openConversation(taskId, receiverId, taskTitle, otherUserName) {
+      currentTaskId = taskId;
+      currentReceiverId = receiverId;
+      
+      // Update UI
+      renderConversations(); // highlight active
+      document.getElementById("emptyState").style.display = "none";
+      document.getElementById("activeChat").style.display = "flex";
+      document.getElementById("chatTitle").textContent = taskTitle;
+      document.getElementById("chatSubtitle").textContent = `with ${otherUserName}`;
+      
+      // Update URL without reload
+      window.history.replaceState({}, "", `?taskId=${taskId}`);
+      
+      // Load messages
+      await fetchMessages();
+      
+      // Mark as read
+      await apiRequest(`/messages/${taskId}/read`, { method: "PATCH" }).catch(console.error);
+      
+      // Start polling
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(fetchMessages, 5000);
+    }
+
+    async function fetchMessages() {
+      if (!currentTaskId) return;
+      try {
+        const messages = await apiRequest(`/messages/${currentTaskId}`);
+        renderMessages(messages);
+      } catch (e) {
+        console.error("Failed to fetch messages", e);
+      }
+    }
+
+    function renderMessages(messages) {
+      const container = document.getElementById("messagesContainer");
+      const isAtBottom = container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
+      
+      if (!messages.length) {
+        container.innerHTML = `<div style="text-align: center; color: var(--text-secondary); margin-top: auto; margin-bottom: auto;">Say hi! 👋</div>`;
+        return;
+      }
+
+      container.innerHTML = messages.map(m => {
+        const isMine = m.sender === currentUser.id;
+        const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `
+          <div class="message ${isMine ? 'sent' : 'received'}">
+            ${m.content}
+            <span class="message-time">${time}</span>
+          </div>
+        `;
+      }).join("");
+
+      // Auto-scroll if we were at bottom
+      if (isAtBottom) {
+        container.scrollTop = container.scrollHeight;
+      }
+    }
+
+    document.getElementById("chatForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const input = document.getElementById("msgInput");
+      const content = input.value.trim();
+      const btn = document.getElementById("sendBtn");
+      
+      if (!content || !currentTaskId || !currentReceiverId) return;
+      
+      input.disabled = true;
+      btn.disabled = true;
+      
+      try {
+        await apiRequest("/messages", {
+          method: "POST",
+          body: JSON.stringify({
+            receiver: currentReceiverId,
+            taskId: currentTaskId,
+            content
+          })
+        });
+        
+        input.value = "";
+        await fetchMessages();
+        
+        // Force scroll to bottom on send
+        const container = document.getElementById("messagesContainer");
+        container.scrollTop = container.scrollHeight;
+        
+      } catch (e) {
+        alert("Failed to send message: " + e.message);
+      } finally {
+        input.disabled = false;
+        btn.disabled = false;
+        input.focus();
+      }
+    });
+
+    loadConversations();
+  </script>
+</body>
+</html>

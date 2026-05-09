@@ -20,6 +20,7 @@
       <a href="index.html" class="logo">SkillSync</a>
       <div class="nav-links flex items-center">
         <a href="browse-students.html">Browse Talent</a>
+        <a href="chat.html">Messages</a>
         <button class="btn btn-secondary" onclick="Auth.logout()" style="padding:8px 16px;">Log Out</button>
       </div>
     </div>
@@ -59,15 +60,31 @@
           return;
         }
         container.innerHTML = tasks.map(task => `
-          <div class="task-card" onclick="window.location.href='project.html?id=${task._id}'">
+          <div class="task-card" style="display:flex; flex-direction:column; cursor:default;">
             <div class="flex justify-between mb-4">
-              <span class="status-badge">${task.status}</span>
+              <span class="status-badge" style="${task.status==='completed'?'color:#10b981;border-color:rgba(16,185,129,0.3);':''}">${task.status}</span>
               ${task.dueDate ? `<span class="text-secondary" style="font-size:0.85rem;">Due ${new Date(task.dueDate).toLocaleDateString()}</span>` : ""}
             </div>
-            <h4 class="mb-2">${task.title} <span style="color:var(--accent-blue);font-size:0.9rem;">($${task.budget || 0})</span></h4>
-            <p class="text-secondary" style="font-size:0.9rem;">${task.description || ""}</p>
-            <div class="assignee-badge">
-              ${task.assignedStudent ? `<span>${task.assignedStudent.name || "Assigned"}</span>` : `<span style="color:var(--text-secondary);">Unassigned</span>`}
+            <h4 class="mb-2 hover-text" style="cursor:pointer;" onclick="window.location.href='project.html?id=${task._id}'">${task.title} <span style="color:var(--accent-blue);font-size:0.9rem;">($${task.budget || 0})</span></h4>
+            <p class="text-secondary mb-4" style="font-size:0.9rem;">${task.description || ""}</p>
+            
+            <div class="assignee-badge mb-4" style="width: fit-content; background:var(--bg-primary); border:1px solid var(--border-glass);">
+              ${task.assignedStudent ? `
+                <div class="flex items-center gap-2">
+                  <div class="avatar-sm" style="width:24px;height:24px;font-size:0.7rem;">${task.assignedStudent.name?task.assignedStudent.name[0].toUpperCase():"S"}</div>
+                  <a href="student-profile.html?id=${task.assignedStudent._id}" style="color:var(--text-primary); text-decoration:none;">${task.assignedStudent.name}</a>
+                </div>
+              ` : `<span style="color:var(--text-secondary);">Unassigned</span>`}
+            </div>
+            
+            <div style="margin-top: auto;">
+              ${task.assignedStudent && task.status !== 'completed' ? `
+                <button class="btn btn-primary" style="width:100%;" onclick="markAsCompleted('${task._id}')">Mark as Completed</button>
+              ` : task.status === 'completed' ? `
+                <button class="btn btn-secondary" style="width:100%; opacity:0.5; cursor:not-allowed;" disabled>Completed</button>
+              ` : `
+                <a href="browse-students.html" class="btn btn-secondary" style="width:100%;text-align:center;display:block;">Assign Student</a>
+              `}
             </div>
           </div>
         `).join("");
@@ -75,6 +92,20 @@
         container.innerHTML = `<div class="empty-state" style="color:#ef4444;">${e.message}</div>`;
       }
     }
+    
+    async function markAsCompleted(taskId) {
+      if (!confirm("Are you sure you want to mark this task as completed? This will free up the student for other tasks.")) return;
+      try {
+        await apiRequest(`/tasks/${taskId}/status`, {
+          method: "PUT",
+          body: JSON.stringify({ status: "completed" })
+        });
+        loadCompanyTasks();
+      } catch(e) {
+        alert("Failed to mark as completed: " + e.message);
+      }
+    }
+    
     loadCompanyTasks();
   </script>
 </body>

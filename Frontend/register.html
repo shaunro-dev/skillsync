@@ -33,9 +33,13 @@
       <form id="registerForm">
         <div id="successMessage" style="color:#10b981;margin-bottom:16px;font-size:0.9rem;display:none;"></div>
         <div id="errorMessage" style="color:#ef4444;margin-bottom:16px;font-size:0.9rem;display:none;"></div>
-        <div class="flex gap-4 mb-4">
+        <div class="flex gap-4 mb-4" id="nameFields">
           <div class="form-group mb-0" style="text-align:left;flex:1;"><label class="form-label">First Name</label><input type="text" id="firstName" class="form-control" required></div>
           <div class="form-group mb-0" style="text-align:left;flex:1;"><label class="form-label">Last Name</label><input type="text" id="lastName" class="form-control" required></div>
+        </div>
+        <div id="companyFields" style="display:none;">
+          <div class="form-group" style="text-align:left;"><label class="form-label">Company Name</label><input type="text" id="companyName" class="form-control"></div>
+          <div class="form-group" style="text-align:left;"><label class="form-label">HR Name</label><input type="text" id="hrName" class="form-control"></div>
         </div>
         <div class="form-group" style="text-align:left;"><label class="form-label">Email Address</label><input type="email" id="email" class="form-control" required></div>
         <div class="form-group" style="text-align:left;"><label class="form-label">Password</label><input type="password" id="password" class="form-control" required></div>
@@ -51,6 +55,23 @@
       option.addEventListener("click", () => {
         document.querySelectorAll(".role-option").forEach(o => o.classList.remove("active"));
         option.classList.add("active");
+        
+        const role = option.dataset.role;
+        const companyFields = document.getElementById("companyFields");
+        const nameFields = document.getElementById("nameFields");
+        
+        if (role === "company") {
+          companyFields.style.display = "block";
+          document.getElementById("companyName").required = true;
+          document.getElementById("hrName").required = true;
+          // Optionally, hide First/Last Name if they only use HR name for Company.
+          // But authController requires firstName, lastName. Let's keep them or auto-fill them.
+          // The prompt says "The User model should store companyName and hrName as additional fields".
+        } else {
+          companyFields.style.display = "none";
+          document.getElementById("companyName").required = false;
+          document.getElementById("hrName").required = false;
+        }
       });
     });
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
@@ -60,13 +81,15 @@
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value;
       const role = document.querySelector(".role-option.active").dataset.role;
+      const companyName = document.getElementById("companyName").value.trim();
+      const hrName = document.getElementById("hrName").value.trim();
       const errorMsg = document.getElementById("errorMessage");
       const successMsg = document.getElementById("successMessage");
       errorMsg.style.display = "none"; successMsg.style.display = "none";
       try {
         const data = await apiRequest("/auth/register", {
           method: "POST",
-          body: JSON.stringify({ firstName, lastName, email, password, role })
+          body: JSON.stringify({ firstName, lastName, email, password, role, companyName, hrName })
         });
         setToken(data.token);
         setUser(data.user);

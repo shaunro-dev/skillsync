@@ -21,8 +21,11 @@ const userSchema = new mongoose.Schema(
 
     profileTitle: { type: String, default: "" },
     bio: { type: String, default: "" },
+    description: { type: String, default: "" },
     skills: [{ type: String }],
     college: { type: String, default: "" },
+    companyName: { type: String, default: "" },
+    hrName: { type: String, default: "" },
     avatar: { type: String, default: "" },
 
     verifiedScore: { type: Number, default: 0 },

@@ -19,7 +19,7 @@ exports.getMyProfile = async (req, res) => {
 
 exports.updateMyProfile = async (req, res) => {
   try {
-    const { profileTitle, bio, skills, college, avatar } = req.body;
+    const { profileTitle, bio, description, skills, college, avatar } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -28,6 +28,7 @@ exports.updateMyProfile = async (req, res) => {
 
     user.profileTitle = profileTitle ?? user.profileTitle;
     user.bio = bio ?? user.bio;
+    user.description = description ?? user.description;
     user.skills = skills ?? user.skills;
     user.college = college ?? user.college;
     user.avatar = avatar ?? user.avatar;
@@ -88,9 +89,8 @@ exports.getStudentProfile = async (req, res) => {
       .populate("reviews.company", "name");
 
     const tasks = await Task.find({
-      assignedStudent: req.params.id,
-      status: "completed"
-    }).populate("company", "name");
+      assignedStudent: req.params.id
+    }).populate("company", "name companyName");
 
     res.json({ student, tasks });
   } catch (error) {

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Tasks | SkillSync</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .browse-layout { padding-top:100px; padding-bottom:60px; display:grid; grid-template-columns:280px 1fr; gap:32px; }
+    .filter-panel { position:sticky; top:100px; border:1px solid var(--border-glass); background:rgba(22,25,37,0.4); padding:24px; border-radius:var(--radius-lg); }
+    .task-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:24px; }
+    .task-card { background:var(--bg-glass); border:1px solid var(--border-glass); border-radius:var(--radius-md); padding:24px; transition:all var(--transition-normal); display:flex; flex-direction:column; }
+    .task-card:hover { border-color:rgba(59,130,246,0.5); transform:translateY(-4px); }
+    .empty-state { padding:60px; text-align:center; color:var(--text-secondary); grid-column:1/-1; }
+  </style>
+</head>
+<body>
+  <nav class="glass-nav">
+    <div class="container navbar">
+      <a href="index.html" class="logo">SkillSync</a>
+      <div class="nav-links flex items-center"><a href="student-dashboard.html">Dashboard</a></div>
+    </div>
+  </nav>
+  <div class="container browse-layout animate-fade">
+    <aside>
+      <div class="filter-panel">
+        <div class="flex justify-between items-center mb-6">
+          <h3 style="font-size:1.2rem;">Filters</h3>
+          <span style="font-size:0.8rem;color:var(--accent-blue);cursor:pointer;" onclick="resetFilters()">Clear All</span>
+        </div>
+        <div class="form-group">
+          <input type="text" id="taskSearch" class="form-control" placeholder="Search tasks..." oninput="applyFilters()">
+        </div>
+      </div>
+    </aside>
+    <main>
+      <div class="flex justify-between items-center mb-6">
+        <p class="text-secondary">Showing <strong id="taskCount" style="color:var(--text-primary);">0</strong> open tasks</p>
+      </div>
+      <div id="tasksContainer" class="task-grid"><div class="empty-state">Loading tasks...</div></div>
+    </main>
+  </div>
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    if (!getToken()) window.location.href = "login.html";
+    const user = getUser();
+    if (user && user.role === "company") window.location.href = "company-dashboard.html";
+
+    let allTasks = [];
+
+    function renderTasks(tasks) {
+      const container = document.getElementById("tasksContainer");
+      document.getElementById("taskCount").textContent = tasks.length;
+      if (!tasks.length) { container.innerHTML = '<div class="empty-state">No tasks match your filters.</div>'; return; }
+      container.innerHTML = tasks.map(t => {
+        return `<div class="task-card">
+          <div class="flex justify-between mb-2">
+            <span class="status-badge" style="background:rgba(59,130,246,0.1);border-color:rgba(59,130,246,0.3);color:var(--accent-blue);">${t.status || 'open'}</span>
+            <span style="color:var(--accent-blue);font-weight:bold;">$${t.budget || 0}</span>
+          </div>
+          <h4 style="font-size:1.1rem;margin-bottom:8px;">${t.title || "Task"}</h4>
+          <p class="text-secondary mb-4" style="font-size:0.85rem;flex-grow:1;">${t.description || "No description available."}</p>
+          <div style="background:rgba(255,255,255,0.03);padding:12px;border-radius:8px;border:1px solid var(--border-glass);">
+            <div class="flex justify-between text-sm mb-1"><span class="text-secondary">Company</span><span>${t.company?.name || 'Company'}</span></div>
+            ${t.dueDate ? `<div class="flex justify-between text-sm"><span class="text-secondary">Due Date</span><span>${new Date(t.dueDate).toLocaleDateString()}</span></div>` : ""}
+          </div>
+          <a href="project.html?id=${t._id}" class="btn btn-primary mt-4" style="width:100%;text-align:center;">View Details</a>
+        </div>`;
+      }).join("");
+    }
+
+    function applyFilters() {
+      const search = document.getElementById("taskSearch").value.toLowerCase();
+      let filtered = allTasks.filter(t => {
+        if (search && !(t.title?.toLowerCase().includes(search) || t.description?.toLowerCase().includes(search))) return false;
+        return true;
+      });
+      renderTasks(filtered);
+    }
+
+    function resetFilters() {
+      document.getElementById("taskSearch").value = "";
+      applyFilters();
+    }
+
+    async function loadTasks() {
+      try {
+        const tasks = await apiRequest("/tasks/open");
+        allTasks = tasks;
+        applyFilters();
+      } catch(e) {
+        document.getElementById("tasksContainer").innerHTML = `<div class="empty-state" style="color:#ef4444;">${e.message}</div>`;
+      }
+    }
+    loadTasks();
+  </script>
+</body>
+</html>

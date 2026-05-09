@@ -13,8 +13,24 @@ exports.createTask = async (req, res) => {
 
 exports.getCompanyTasks = async (req, res) => {
   try {
-    const tasks = await Task.find({ company: req.user.id })
+    let filter = {};
+    if (req.user.role === "company") {
+      filter.company = req.user.id;
+    }
+    const tasks = await Task.find(filter)
       .populate("assignedStudent", "name profileTitle verifiedScore availability")
+      .populate("company", "name companyName")
+      .sort({ createdAt: -1 });
+    res.json(tasks);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getOpenTasks = async (req, res) => {
+  try {
+    const tasks = await Task.find({ status: "open" })
+      .populate("company", "name companyName")
       .sort({ createdAt: -1 });
     res.json(tasks);
   } catch (error) {
@@ -40,6 +56,7 @@ exports.assignTask = async (req, res) => {
     const task = await Task.findById(taskId);
     const student = await User.findById(studentId);
     if (!task || !student) return res.status(404).json({ message: "Task or student not found" });
+    if (task.company.toString() !== req.user.id) return res.status(403).json({ message: "Not authorized to assign this task" });
     task.assignedStudent = student._id;
     task.status = "assigned";
     await task.save();

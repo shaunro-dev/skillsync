@@ -26,38 +26,6 @@
       font-size: 0.85rem;
       color: var(--text-secondary);
     }
-
-    .milestone {
-      display: flex;
-      gap: 16px;
-      padding-bottom: 24px;
-      position: relative;
-    }
-
-    .milestone::before {
-      content: '';
-      position: absolute;
-      left: 11px;
-      top: 24px;
-      bottom: 0px;
-      width: 2px;
-      background: var(--border-glass);
-    }
-    .milestone:last-child::before { display: none; }
-
-    .milestone-dot {
-      width: 24px; height: 24px;
-      border-radius: 50%;
-      background: var(--bg-secondary);
-      border: 2px solid var(--accent-blue);
-      z-index: 2;
-    }
-
-    .milestone.completed .milestone-dot {
-      background: var(--accent-blue);
-    }
-
-    .milestone-content { flex: 1; }
   </style>
 </head>
 <body>
@@ -68,107 +36,148 @@
         <span>← Back</span>
       </a>
       <div class="logo">SkillSync</div>
-      <div style="width: 100px;"></div>
+      <div class="nav-links flex items-center" id="navLinks">
+        <!-- Rendered by JS -->
+      </div>
     </div>
   </nav>
 
-  <header class="container project-header animate-fade">
-    <div class="flex justify-between items-start mb-4">
-      <div>
-        <div class="flex gap-2 mb-4">
-          <span class="tag">Frontend</span>
-          <span class="tag">React</span>
-          <span class="tag">$300 Fix-bid</span>
-        </div>
-        <h1 style="font-size: 2.5rem; margin-bottom: 8px;">Build a responsive React Navbar</h1>
-        <p class="text-secondary" style="font-size: 1.1rem;">TechNova Inc.</p>
-      </div>
-      <div class="status-badge" style="border-color: rgba(245, 158, 11, 0.3); color: #f59e0b; padding: 8px 16px; font-size: 1rem;">
-        In Progress
-      </div>
-    </div>
-  </header>
+  <div id="contentWrapper">
+    <div style="padding: 120px; text-align: center; color: var(--text-secondary);">Loading project details...</div>
+  </div>
 
-  <main class="container two-col animate-fade" style="animation-delay: 0.2s;">
-    <div>
-      <h3 class="mb-4">Description</h3>
-      <p class="text-secondary mb-6" style="white-space: pre-line;">
-        We need a responsive navigation bar for our main dashboard. It should use our glassmorphism design tokens.
-        
-        Requirements:
-        - Mobile hamburger menu toggle.
-        - Desktop links with active hover states.
-        - Must be built using raw React hooks, no extra UI libraries.
-        - Strict pixel match with the provided Figma file.
-      </p>
-
-      <h3 class="mb-4">Milestones & Progress</h3>
-      <div class="glass-panel text-left">
-        <div class="milestone completed">
-          <div class="milestone-dot"></div>
-          <div class="milestone-content">
-            <h4 style="margin-bottom: 4px;">Assigned to Alex Johnson</h4>
-            <p class="text-secondary" style="font-size: 0.9rem;">Oct 12, 10:00 AM</p>
-          </div>
-        </div>
-        <div class="milestone completed">
-          <div class="milestone-dot"></div>
-          <div class="milestone-content">
-            <h4 style="margin-bottom: 4px;">Figma Review & Scoped</h4>
-            <p class="text-secondary" style="font-size: 0.9rem;">Oct 12, 11:30 AM</p>
-          </div>
-        </div>
-        <div class="milestone">
-          <div class="milestone-dot" style="border-color: var(--text-secondary);"></div>
-          <div class="milestone-content">
-            <h4 style="margin-bottom: 4px; color: var(--text-secondary);">Submit Code PR</h4>
-            <p class="text-secondary" style="font-size: 0.9rem;">Due: Oct 14</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <aside>
-      <div class="glass-panel mb-6">
-        <h4 class="mb-4 text-secondary">Assignee</h4>
-        <div class="flex items-center gap-3">
-          <div class="avatar-sm" style="width:40px;height:40px; border-radius:50%; background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">aj</div>
-          <div>
-            <h4 style="font-size: 1rem;">Alex Johnson</h4>
-            <a href="student-profile.html" class="text-gradient" style="font-size: 0.85rem;">View Profile</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Panel changes depending on mock user role -->
-      <div class="glass-panel" id="actionPanel">
-        <!-- Rendered by JS -->
-      </div>
-    </aside>
-  </main>
-
+  <script src="js/api.js"></script>
   <script src="js/app.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const role = localStorage.getItem('userRole') || 'student';
-      const panel = document.getElementById('actionPanel');
+    if (!getToken()) window.location.href = "login.html";
+    const user = getUser();
+    
+    const navLinks = document.getElementById("navLinks");
+    if (user.role === 'student') {
+      navLinks.innerHTML = '<a href="student-dashboard.html">Dashboard</a><a href="chat.html">Messages</a>';
+    } else {
+      navLinks.innerHTML = '<a href="company-dashboard.html">Dashboard</a><a href="chat.html">Messages</a>';
+    }
 
-      if (role === 'student') {
-        panel.innerHTML = `
-          <h4 class="mb-4">Update Status</h4>
-          <p class="text-secondary mb-4" style="font-size: 0.85rem;">Mark your current progress so the company knows you're on track.</p>
-          <button class="btn btn-primary" style="width: 100%; margin-bottom: 12px;">Submit PR for Review</button>
-          <button class="btn btn-secondary" style="width: 100%; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">Report Blocker</button>
+    async function loadProject() {
+      const params = new URLSearchParams(window.location.search);
+      const taskId = params.get("id");
+      if (!taskId) {
+        document.getElementById("contentWrapper").innerHTML = "<div style='padding: 120px; text-align: center;'>No project specified.</div>";
+        return;
+      }
+
+      try {
+        const task = await apiRequest(`/tasks/${taskId}`);
+        renderProject(task);
+      } catch (e) {
+        document.getElementById("contentWrapper").innerHTML = `<div style='padding: 120px; text-align: center; color:#ef4444;'>${e.message}</div>`;
+      }
+    }
+
+    function renderProject(task) {
+      const isCompany = user.role === 'company';
+      
+      const companyName = task.company?.name || task.company?.companyName || "Company";
+      const studentName = task.assignedStudent ? task.assignedStudent.name : "Unassigned";
+      
+      let actionPanel = '';
+      
+      if (task.status === 'completed') {
+        actionPanel = `
+          <h4 class="mb-4">Status</h4>
+          <div class="status-badge" style="color:#10b981; border-color:rgba(16,185,129,0.3); justify-content:center;">Completed</div>
         `;
       } else {
-        panel.innerHTML = `
-          <h4 class="mb-4">Company Actions</h4>
-          <p class="text-secondary mb-4" style="font-size: 0.85rem;">Manage the task and communicate with the talent.</p>
-          <button class="btn btn-secondary" style="width: 100%; margin-bottom: 12px;">Message Alex</button>
-          <button class="btn btn-primary" style="width: 100%; background: #10b981; border: none;">Approve & Payout</button>
-        `;
+        if (isCompany) {
+          actionPanel = `
+            <h4 class="mb-4">Company Actions</h4>
+            <p class="text-secondary mb-4" style="font-size: 0.85rem;">Manage the task and communicate with the talent.</p>
+            ${task.assignedStudent ? `
+              <a href="chat.html?taskId=${task._id}" class="btn btn-secondary" style="width: 100%; margin-bottom: 12px; display:block; text-align:center;">Message ${studentName}</a>
+              <button class="btn btn-primary" style="width: 100%; background: #10b981; border: none;" onclick="markCompleted('${task._id}')">Approve & Complete</button>
+            ` : `
+              <p class="text-secondary mb-4" style="font-size: 0.85rem;">No student assigned yet.</p>
+              <a href="browse-students.html" class="btn btn-primary" style="width: 100%; display:block; text-align:center;">Find Talent</a>
+            `}
+          `;
+        } else {
+          // Student
+          if (task.assignedStudent && task.assignedStudent._id === user.id) {
+            actionPanel = `
+              <h4 class="mb-4">Update Status</h4>
+              <p class="text-secondary mb-4" style="font-size: 0.85rem;">Communicate with the company and submit your work.</p>
+              <a href="chat.html?taskId=${task._id}" class="btn btn-secondary" style="width: 100%; margin-bottom: 12px; display:block; text-align:center;">Message ${companyName}</a>
+            `;
+          } else {
+            actionPanel = `
+              <h4 class="mb-4">Open Opportunity</h4>
+              <p class="text-secondary mb-4" style="font-size: 0.85rem;">This task is available. Wait for a company to assign it to you.</p>
+            `;
+          }
+        }
       }
-    });
+
+      document.getElementById("contentWrapper").innerHTML = `
+        <header class="container project-header animate-fade">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <div class="flex gap-2 mb-4">
+                <span class="tag">$${task.budget || 0} Budget</span>
+                ${task.primarySkill ? `<span class="tag">${task.primarySkill}</span>` : ""}
+              </div>
+              <h1 style="font-size: 2.5rem; margin-bottom: 8px;">${task.title}</h1>
+              <p class="text-secondary" style="font-size: 1.1rem;">${companyName}</p>
+            </div>
+            <div class="status-badge" style="padding: 8px 16px; font-size: 1rem; ${task.status==='completed'?'color:#10b981; border-color:rgba(16,185,129,0.3);':''}">
+              ${task.status}
+            </div>
+          </div>
+        </header>
+
+        <main class="container two-col animate-fade" style="animation-delay: 0.2s;">
+          <div>
+            <h3 class="mb-4">Description</h3>
+            <p class="text-secondary mb-6" style="white-space: pre-line;">${task.description || "No description provided."}</p>
+            ${task.dueDate ? `<p class="text-secondary mb-6"><strong>Due Date:</strong> ${new Date(task.dueDate).toLocaleDateString()}</p>` : ""}
+          </div>
+
+          <aside>
+            <div class="glass-panel mb-6">
+              <h4 class="mb-4 text-secondary">Assignee</h4>
+              <div class="flex items-center gap-3">
+                <div class="avatar-sm" style="width:40px;height:40px; border-radius:50%; background:var(--accent-gradient); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold;">
+                  ${studentName !== "Unassigned" ? studentName[0].toUpperCase() : "?"}
+                </div>
+                <div>
+                  <h4 style="font-size: 1rem;">${studentName}</h4>
+                  ${task.assignedStudent ? `<a href="student-profile.html?id=${task.assignedStudent._id}" class="text-gradient" style="font-size: 0.85rem;">View Profile</a>` : ""}
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-panel" id="actionPanel">
+              ${actionPanel}
+            </div>
+          </aside>
+        </main>
+      `;
+    }
+
+    async function markCompleted(taskId) {
+      if (!confirm("Are you sure you want to mark this task as completed?")) return;
+      try {
+        await apiRequest(`/tasks/${taskId}/status`, {
+          method: "PUT",
+          body: JSON.stringify({ status: "completed" })
+        });
+        loadProject();
+      } catch (e) {
+        alert("Failed to complete task: " + e.message);
+      }
+    }
+
+    loadProject();
   </script>
 </body>
 </html>
