@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://skillsync-backend.onrender.com/api"; 
 
 function setToken(token) { localStorage.setItem("token", token); }
 function getToken() { return localStorage.getItem("token"); }
@@ -24,10 +24,16 @@ async function apiRequest(endpoint, options = {}) {
       ...options.headers
     }
   };
-  const res = await fetch(url, config);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || "Request failed");
+  
+  try {
+    const res = await fetch(url, config);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: res.statusText }));
+      throw new Error(err.message || "Request failed");
+    }
+    return res.json();
+  } catch (error) {
+    console.error("API Request Error:", error);
+    throw error;
   }
-  return res.json();
 }
