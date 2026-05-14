@@ -8,20 +8,24 @@ connectDB();
 
 const app = express();
 
-// --- UPDATED CORS SECTION ---
+// --- UPDATED CORS FOR DEPLOYMENT ---
+const allowedOrigins = [
+  "http://localhost:5500", 
+  "http://127.0.0.1:5500",
+  process.env.CLIENT_URL
+].filter(Boolean);
+
 app.use(cors({ 
-  origin: [
-    "http://localhost:5500", 
-    "http://127.0.0.1:5500",
-    process.env.CLIENT_URL // Keeps your .env setting active too
-  ].filter(Boolean) // Removes empty values if CLIENT_URL isn't set
+  origin: allowedOrigins,
+  credentials: true
 }));
-// ----------------------------
+// ----------------------------------
 
 app.use(express.json());
 
 app.get("/", (req, res) => res.send("SkillSync API running"));
 
+// Route Middlewares
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
@@ -29,4 +33,8 @@ app.use("/api/availability", require("./routes/availabilityRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Binding to 0.0.0.0 is essential for Render/Cloud deployment
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+});
