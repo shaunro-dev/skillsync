@@ -19,7 +19,7 @@ router.get("/:id", authMiddleware, getTaskById);
 router.post("/assign", authMiddleware, roleMiddleware("company"), assignTask);
 router.put("/:id/status", authMiddleware, roleMiddleware("company"), updateTaskStatus);
 
-=======
+
 const express = require("express");
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
